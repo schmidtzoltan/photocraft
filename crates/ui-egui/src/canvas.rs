@@ -1166,6 +1166,8 @@ pub(crate) use render::{
     ClonePreviewCache, CpuTextures, InView,
     NavigatorCache,
 };
+#[cfg(test)]
+pub(crate) use render::GPU_OUTPUT;
 /// Tabs + canvas for the active document, or the start screen; then drops layers dragged onto
 /// another document (`layer_transfer`).
 pub fn document_area(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
