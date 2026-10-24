@@ -1238,6 +1238,8 @@ use render::{
     canvas_texture_options, checker, ensure_adjust_proxy, ensure_gpu, ensure_proxy_preview, filter_preview_display_doc, navigator_waits_for_drag, redraw_focus,
     sync_display_lut, texture_side, visible_doc_rect,
 };
+#[cfg(test)]
+pub(crate) use render::GPU_OUTPUT;
 /// Tabs + canvas for the active document, or the start screen; then drops layers dragged onto
 /// another document (`layer_transfer`).
 pub fn document_area(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
@@ -6108,8 +6110,32 @@ mod tests {
 
     use super::*;
 
-    /// #569: displays 1 (sRGB) and 4 (Display P3) side by side, and a document filled with an
-    /// sRGB colour.
+    #[test]
+    fn only_themes_with_a_dot_pattern_tile_the_canvas_surround() {
+        // #4542: switching to Pro filled the empty workspace with red blocks on one GPU. Pro's
+        // dots are its canvas colour, so the tiled texture had nothing to show in the first place.
+        use crate::theme::ThemeKind;
+        let tiles = |ctx: &egui::Context, kind: ThemeKind| {
+            crate::theme::apply(ctx, kind);
+            let mut output = ctx.run_ui(Default::default(), |ui| paint_dots(ui, ui.max_rect(), true));
+            output.textures_delta.clear();
+            output.shapes.iter().any(|s| matches!(s.shape, egui::Shape::Mesh(_)))
+        };
+        let uploaded = |ctx: &egui::Context| ctx.tex_manager().read().allocated().filter(|(_, meta)| meta.name == "canvas-dots").count();
+        for kind in ThemeKind::ALL {
+            let ctx = egui::Context::default();
+            let dotted = matches!(kind, ThemeKind::Studio | ThemeKind::StudioLight | ThemeKind::SolarizedDark);
+            assert_eq!(tiles(&ctx, kind), dotted, "{kind:?}");
+            assert_eq!(uploaded(&ctx), usize::from(dotted), "{kind:?}");
+        }
+        // The reported switch: a dotted theme, then Pro.
+        let ctx = egui::Context::default();
+        assert!(tiles(&ctx, ThemeKind::Studio));
+        assert!(!tiles(&ctx, ThemeKind::Pro));
+        assert!(!tiles(&ctx, ThemeKind::ProMedium));
+        assert_eq!(uploaded(&ctx), 1, "only Studio's dots were uploaded");
+    }
+
     /// The navigator's update after an edit (its image with the edit's damage, grown by the
     /// effect reach, rendered over it) equals a new thumbnail of the edited document.
     #[test]
@@ -6147,32 +6173,6 @@ mod tests {
             }
             assert!(shown.px == thumbnail_buffer(&st.doc, NAVIGATOR_SIDE).px, "{id}: the updated navigator differs from a new thumbnail");
         }
-    }
-
-    #[test]
-    fn only_themes_with_a_dot_pattern_tile_the_canvas_surround() {
-        // #4542: switching to Pro filled the empty workspace with red blocks on one GPU. Pro's
-        // dots are its canvas colour, so the tiled texture had nothing to show in the first place.
-        use crate::theme::ThemeKind;
-        let tiles = |ctx: &egui::Context, kind: ThemeKind| {
-            crate::theme::apply(ctx, kind);
-            let mut output = ctx.run_ui(Default::default(), |ui| paint_dots(ui, ui.max_rect(), true));
-            output.textures_delta.clear();
-            output.shapes.iter().any(|s| matches!(s.shape, egui::Shape::Mesh(_)))
-        };
-        let uploaded = |ctx: &egui::Context| ctx.tex_manager().read().allocated().filter(|(_, meta)| meta.name == "canvas-dots").count();
-        for kind in ThemeKind::ALL {
-            let ctx = egui::Context::default();
-            let dotted = matches!(kind, ThemeKind::Studio | ThemeKind::StudioLight | ThemeKind::SolarizedDark);
-            assert_eq!(tiles(&ctx, kind), dotted, "{kind:?}");
-            assert_eq!(uploaded(&ctx), usize::from(dotted), "{kind:?}");
-        }
-        // The reported switch: a dotted theme, then Pro.
-        let ctx = egui::Context::default();
-        assert!(tiles(&ctx, ThemeKind::Studio));
-        assert!(!tiles(&ctx, ThemeKind::Pro));
-        assert!(!tiles(&ctx, ThemeKind::ProMedium));
-        assert_eq!(uploaded(&ctx), 1, "only Studio's dots were uploaded");
     }
 
     #[test]
