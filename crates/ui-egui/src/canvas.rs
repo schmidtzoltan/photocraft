@@ -1231,14 +1231,18 @@ pub fn fill_view(view: &mut View, doc: &Document, area: Vec2, ppp: f32, aspect: 
 mod render;
 #[cfg(test)]
 pub(crate) use render::GPU_OUTPUT;
+#[cfg(test)]
+pub(crate) use render::committed_filter_preview;
+#[cfg(test)]
+use render::navigator_waits_for_drag;
 pub use render::{CanvasCache, DetailTexture, MAX_TEXTURE, NAVIGATOR_SIDE, ensure_texture, navigator_gpu_view, navigator_texture, navigator_waits_for_gpu};
 pub(crate) use render::{
-    ClonePreviewCache, CpuTextures, InView, NavigatorCache, cache_key, canvas_display, committed_filter_preview, damage_since, display_doc, display_image,
-    effect_reach, ensure_filter_preview, ensure_texture_in_view, filter_channel_preview, filter_preview_factor, retain_gpu_documents, shown_as_document,
+    ClonePreviewCache, InView, NavigatorCache, cache_key, canvas_display, damage_since, display_doc, display_image, effect_reach, ensure_filter_preview,
+    ensure_texture_in_view, filter_channel_preview, filter_preview_factor, retain_gpu_documents, shown_as_document,
 };
 use render::{
-    canvas_texture_options, checker, ensure_adjust_proxy, ensure_gpu, ensure_proxy_preview, filter_preview_display_doc, navigator_waits_for_drag, redraw_focus,
-    sync_display_lut, texture_side, visible_doc_rect,
+    canvas_texture_options, checker, ensure_adjust_proxy, ensure_gpu, ensure_proxy_preview, filter_preview_display_doc, redraw_focus, sync_display_lut,
+    texture_side, visible_doc_rect,
 };
 /// Tabs + canvas for the active document, or the start screen; then drops layers dragged onto
 /// another document (`layer_transfer`).
