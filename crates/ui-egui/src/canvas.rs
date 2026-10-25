@@ -1229,6 +1229,8 @@ pub fn fill_view(view: &mut View, doc: &Document, area: Vec2, ppp: f32, aspect: 
 
 #[path = "canvas_render.rs"]
 mod render;
+#[cfg(test)]
+pub(crate) use render::GPU_OUTPUT;
 pub use render::{CanvasCache, DetailTexture, MAX_TEXTURE, NAVIGATOR_SIDE, ensure_texture, navigator_gpu_view, navigator_texture, navigator_waits_for_gpu};
 pub(crate) use render::{
     ClonePreviewCache, CpuTextures, InView, NavigatorCache, cache_key, canvas_display, committed_filter_preview, damage_since, display_doc, display_image,
@@ -1238,8 +1240,6 @@ use render::{
     canvas_texture_options, checker, ensure_adjust_proxy, ensure_gpu, ensure_proxy_preview, filter_preview_display_doc, navigator_waits_for_drag, redraw_focus,
     sync_display_lut, texture_side, visible_doc_rect,
 };
-#[cfg(test)]
-pub(crate) use render::GPU_OUTPUT;
 /// Tabs + canvas for the active document, or the start screen; then drops layers dragged onto
 /// another document (`layer_transfer`).
 pub fn document_area(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
